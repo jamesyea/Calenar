@@ -1,8 +1,8 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-    kotlin("kapt")
+    alias(libs.plugins.android.application) // 使用 alias 管理 Android 插件
+    alias(libs.plugins.kotlin.android)     // Kotlin 插件
+    alias(libs.plugins.kotlin.compose)     // Jetpack Compose 插件
+    kotlin("kapt")                         // Room 等需要的 KAPT 支援
 }
 
 android {
@@ -45,6 +45,8 @@ dependencies {
     kapt("com.google.dagger:hilt-compiler:2.51.1")
     implementation("com.kizitonwose.calendar:core:2.0.0")
     implementation("com.kizitonwose.calendar:compose:2.0.0")
+    implementation("androidx.compose.material3:material3:1.1.1")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -60,4 +62,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.room:room-runtime:2.5.0")
+    kapt("androidx.room:room-compiler:2.5.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0")
 }
