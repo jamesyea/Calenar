@@ -16,10 +16,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
 import com.example.mycalender.calender.AddEventScreen
+import com.example.mycalender.calender.CalendarViewModel
+import com.example.mycalender.calender.CalendarViewModelFactory
 import com.example.mycalender.ui.theme.MyCalenderTheme
 import com.example.mycalender.calender.CalenderScreen
+import com.example.mycalender.data.AppDatabase
+import com.example.mycalender.data.EventRepository
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,6 +45,13 @@ class MainActivity : ComponentActivity() {
 fun MainActivityContent(){
     var showAddEventScreen by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val database = AppDatabase.getDatabase(context)
+    val repository = EventRepository(database.eventDao())
+    val viewModel :CalendarViewModel = viewModel(
+        facory = CalendarViewModelFactory(repository)
+    )
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddEventScreen = true }) {
@@ -51,7 +65,7 @@ fun MainActivityContent(){
                     onEventAdded = { showAddEventScreen = false } // 新增完成後回到行事曆畫面
                 )
             } else {
-                CalenderScreen()
+                CalenderScreen(viewModel = viewModel)
             }
         }
 
