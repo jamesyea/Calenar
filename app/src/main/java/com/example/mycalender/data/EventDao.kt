@@ -12,6 +12,9 @@ interface EventDao {
     @Delete
     suspend fun deleteEvent(event: Event)
 
+    @Update
+    suspend fun updateEvent(event: Event)
+
     @Query("SELECT * FROM events WHERE date = :date ORDER BY StartTime")
     fun getEventsByDate(date: LocalDate): Flow<List<Event>>
 

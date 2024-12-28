@@ -14,23 +14,29 @@ import androidx.compose.ui.unit.dp
 import com.example.mycalender.data.Event
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun AddEventScreen(
-    onEventAdded: () -> Unit,
+    onEventSaved: () -> Unit,
     onCancel: () -> Unit = {},
-    addEventToDatabase: (Event) -> Unit
+    saveEventToDatabase: (Event) -> Unit,
+    existingEvent: Event? = null
 ) {
     val context = LocalContext.current
 
-    // 表單狀態
-    var eventName by remember { mutableStateOf("") }
-    var eventNote by remember { mutableStateOf("") }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var startTime by remember { mutableStateOf(LocalTime.now()) }
-    var endTime by remember { mutableStateOf(LocalTime.now().plusHours(1)) }
+    // 預填充表單數據
+    var eventName by remember { mutableStateOf(existingEvent?.title ?: "") }
+    var eventNote by remember { mutableStateOf(existingEvent?.note ?: "") }
+    var selectedDate by remember { mutableStateOf(existingEvent?.date ?: LocalDate.now()) }
+    var startTime by remember { mutableStateOf(existingEvent?.startTime ?: LocalTime.now()) }
+    var endTime by remember { mutableStateOf(existingEvent?.endTime ?: LocalTime.now().plusHours(1)) }
 
-    // 日期選擇器
+    val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)
+    val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+
+    // 日期與時間選擇器
     val datePickerDialog = DatePickerDialog(
         context,
         { _, year, month, dayOfMonth ->
@@ -41,7 +47,6 @@ fun AddEventScreen(
         selectedDate.dayOfMonth
     )
 
-    // 開始時間選擇器
     val startTimePickerDialog = TimePickerDialog(
         context,
         { _, hourOfDay, minute ->
@@ -49,10 +54,9 @@ fun AddEventScreen(
         },
         startTime.hour,
         startTime.minute,
-        true
+        false
     )
 
-    // 結束時間選擇器
     val endTimePickerDialog = TimePickerDialog(
         context,
         { _, hourOfDay, minute ->
@@ -60,7 +64,7 @@ fun AddEventScreen(
         },
         endTime.hour,
         endTime.minute,
-        true
+        false
     )
 
     Column(
@@ -71,7 +75,7 @@ fun AddEventScreen(
     ) {
         // 標題
         Text(
-            text = "新增行程",
+            text = if (existingEvent == null) "Add Event" else "Edit Event",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(bottom = 16.dp)
         )
@@ -80,7 +84,7 @@ fun AddEventScreen(
         OutlinedTextField(
             value = eventName,
             onValueChange = { eventName = it },
-            label = { Text("行程名稱") },
+            label = { Text("Event Name") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -90,7 +94,7 @@ fun AddEventScreen(
         OutlinedTextField(
             value = eventNote,
             onValueChange = { eventNote = it },
-            label = { Text("行程備註") },
+            label = { Text("Event Note") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -101,7 +105,7 @@ fun AddEventScreen(
             onClick = { datePickerDialog.show() },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "選擇日期：${selectedDate}")
+            Text(text = "Select Date: ${selectedDate.format(dateFormatter)}")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -111,7 +115,7 @@ fun AddEventScreen(
             onClick = { startTimePickerDialog.show() },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "開始時間：${startTime}")
+            Text(text = "Start Time: ${startTime.format(timeFormatter)}")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -121,7 +125,7 @@ fun AddEventScreen(
             onClick = { endTimePickerDialog.show() },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "結束時間：${endTime}")
+            Text(text = "End Time: ${endTime.format(timeFormatter)}")
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -132,40 +136,61 @@ fun AddEventScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                Text(text = "取消")
+                Text(text = "Cancel")
             }
             Spacer(modifier = Modifier.width(16.dp))
             Button(
                 onClick = {
                     if (eventName.isBlank()) {
-                        Toast.makeText(context, "行程名稱不能為空", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Event name cannot be empty", Toast.LENGTH_SHORT).show()
                     } else if (endTime <= startTime) {
-                        Toast.makeText(context, "結束時間必須晚於開始時間", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "End time must be later than start time", Toast.LENGTH_SHORT).show()
                     } else {
-                        // 新增行程到資料庫
-                        val newEvent = Event(
+                        // 保存行程到資料庫
+                        val newEvent = existingEvent?.copy(
+                            title = eventName,
+                            note = eventNote,
+                            date = selectedDate,
+                            startTime = startTime,
+                            endTime = endTime
+                        ) ?: Event(
                             title = eventName,
                             note = eventNote,
                             date = selectedDate,
                             startTime = startTime,
                             endTime = endTime
                         )
-                        addEventToDatabase(newEvent)
-                        Toast.makeText(context, "行程已新增", Toast.LENGTH_SHORT).show()
-                        onEventAdded()
+                        saveEventToDatabase(newEvent)
+                        Toast.makeText(
+                            context,
+                            if (existingEvent == null) "Event added successfully" else "Event updated successfully",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        onEventSaved()
                     }
                 },
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = "完成")
+                Text(text = if (existingEvent == null) "Submit" else "Save")
             }
         }
     }
 }
 
 
-
 @Preview(showBackground = true)
 @Composable
 fun AddEventScreenPreview() {
+    AddEventScreen(
+        onEventSaved = {},
+        saveEventToDatabase = {},
+        existingEvent = Event(
+            id = 1,
+            title = "Meeting",
+            note = "Discuss project",
+            date = LocalDate.now(),
+            startTime = LocalTime.of(10, 0),
+            endTime = LocalTime.of(11, 0)
+        )
+    )
 }
