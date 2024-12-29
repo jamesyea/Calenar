@@ -41,11 +41,15 @@ android {
 }
 
 dependencies {
+
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
     implementation("com.kizitonwose.calendar:core:2.0.0")
     implementation("com.kizitonwose.calendar:compose:2.0.0")
     implementation("androidx.compose.material3:material3:1.1.1")
+    implementation ("androidx.core:core-ktx:1.9.0")  // 如果你尚未添加
+    implementation ("androidx.appcompat:appcompat:1.6.1")  // 如果你尚未添加
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -69,4 +73,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.compose.foundation:foundation:1.5.0") // 修正後的版本
+    implementation("com.google.code.gson:gson:2.10.1") // 請確認使用最新版本
 }

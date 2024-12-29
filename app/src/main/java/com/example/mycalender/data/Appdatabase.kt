@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Event::class], version = 1, exportSchema = false)
+@Database(entities = [Event::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun eventDao(): EventDao
@@ -22,6 +22,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "my_calendar_db"
                 )
+                    // 避免丟失資料，這一行應該去掉
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

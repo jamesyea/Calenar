@@ -1,8 +1,13 @@
 // CalendarViewModel.kt
 package com.example.mycalender.calender
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mycalender.NotificationReceiver
 import com.example.mycalender.data.Event
 import com.example.mycalender.data.EventRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,4 +69,20 @@ class CalendarViewModel(private val repository: EventRepository) : ViewModel() {
             loadEventsForDate(_selectedDate.value)
         }
     }
+    fun setEventReminder(context: Context, eventTimeInMillis: Long, eventTitle: String, eventDescription: String) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        // 創建通知的 Intent
+        val intent = Intent(context, NotificationReceiver::class.java)
+        intent.putExtra("eventTitle", eventTitle)
+        intent.putExtra("eventDescription", eventDescription)
+
+        // 使用 PendingIntent 包裝通知 Intent
+        val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        // 設置提醒時間，提前五分鐘提醒
+        val triggerAtMillis = eventTimeInMillis - 300000  // 5分鐘前
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)  // 使用 setExactAndAllowWhileIdle
+    }
 }
+
