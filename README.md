@@ -9,4 +9,4 @@
 ``EventDetailDialog.kt``為點擊行程後顯示的行程詳細視窗<br>
 ``DeleteEventDialog.kt``為長按行程後顯示是否刪除畫面<br>
 
-[data](app\src\main\java\com\example\mycalender\data) 檔案夾下的為資料庫管理與操作區域
+[data](app/src/main/java/com/example/mycalender/data) 檔案夾下的為資料庫管理與操作區域
