@@ -34,28 +34,23 @@ import androidx.core.app.NotificationCompat
 import com.example.mycalender.calender.AddEventScreen
 import com.example.mycalender.calender.CalendarViewModel
 import com.example.mycalender.calender.CalendarViewModelFactory
-import com.example.mycalender.calender.CalenderScreen
+import com.example.mycalender.calender.CalendarScreen
 import com.example.mycalender.data.AppDatabase
 import com.example.mycalender.data.Event
 import com.example.mycalender.data.EventRepository
 import com.example.mycalender.ui.theme.MyCalenderTheme
 import java.time.ZoneId
-import java.time.format.TextStyle
-import java.util.*
-
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.pm.PackageManager
-
 import android.media.RingtoneManager
 import android.os.Vibrator
 import androidx.core.app.NotificationManagerCompat
 import java.util.Locale
 import android.speech.tts.TextToSpeech
 import androidx.core.app.ActivityCompat
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,18 +60,25 @@ class MainActivity : ComponentActivity() {
         val repository = EventRepository(database.eventDao())
         val viewModel = CalendarViewModelFactory(repository).create(CalendarViewModel::class.java)
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                "reminder_channel",  // 渠道 ID
-                "Event Reminders",   // 渠道名称
+                "reminder_channel",
+                "Event Reminders",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             notificationManager.createNotificationChannel(channel)
         }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_CODE_PERMISSION)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    REQUEST_CODE_PERMISSION
+                )
             }
         }
 
@@ -86,7 +88,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    // 定義請求權限的常數
+
     val REQUEST_CODE_PERMISSION = 123
 
     override fun onRequestPermissionsResult(
@@ -97,21 +99,18 @@ class MainActivity : ComponentActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSION) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // 權限授予，開始設置提醒
+                // 权限授予
             } else {
-                // 權限拒絕，處理未授權的情況
+                // 权限拒绝
             }
         }
     }
-
 }
 
 @Composable
 fun MainActivityContent(viewModel: CalendarViewModel) {
     var showAddEventScreen by remember { mutableStateOf(false) }
-    var eventToEdit by remember { mutableStateOf<Event?>(null) }  // 新增事件編輯狀態
-
-
+    var eventToEdit by remember { mutableStateOf<Event?>(null) }
 
     Scaffold(
         floatingActionButton = {
@@ -125,17 +124,20 @@ fun MainActivityContent(viewModel: CalendarViewModel) {
                 AddEventScreen(
                     onEventSaved = {
                         showAddEventScreen = false
-                        eventToEdit = null },
-                    onCancel = { showAddEventScreen = false
-                               eventToEdit = null},
+                        eventToEdit = null
+                    },
+                    onCancel = {
+                        showAddEventScreen = false
+                        eventToEdit = null
+                    },
                     saveEventToDatabase = { event ->
-                        try{
+                        try {
                             if (eventToEdit == null) {
-                                viewModel.addEvent(event) // 新增事件
+                                viewModel.addEvent(event)
                             } else {
-                                viewModel.updateEvent(event) // 更新事件
+                                viewModel.updateEvent(event)
                             }
-                        }catch (e: Exception) {
+                        } catch (e: Exception) {
                             Log.e("MainActivity", "Error saving event", e)
                         }
                     },
@@ -155,7 +157,7 @@ fun MainActivityContent(viewModel: CalendarViewModel) {
 }
 
 @Composable
-fun CustomizedCalendarScreen(viewModel: CalendarViewModel,onEditEvent: (Event) -> Unit) {
+fun CustomizedCalendarScreen(viewModel: CalendarViewModel, onEditEvent: (Event) -> Unit) {
     val currentMonthYear by viewModel.currentMonthYear.collectAsState()
     val selectedDate by viewModel.selectedDate.collectAsState()
     val eventsForSelectedDate by viewModel.eventsForSelectedDate.collectAsState()
@@ -167,7 +169,6 @@ fun CustomizedCalendarScreen(viewModel: CalendarViewModel,onEditEvent: (Event) -
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header with artistic background and title
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -191,26 +192,21 @@ fun CustomizedCalendarScreen(viewModel: CalendarViewModel,onEditEvent: (Event) -
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp)) // Increased spacing between header and calendar section
+        Spacer(modifier = Modifier.height(32.dp))
 
-        // Calendar Section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(Color.White)
-                .padding(16.dp) // Adjusted padding for uniform spacing
+                .padding(16.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Calendar Content
-                CalenderScreen(viewModel = viewModel,onEditEvent = onEditEvent)
+                CalendarScreen(viewModel = viewModel, onEditEvent = onEditEvent)
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp)) // Increased spacing between calendar and events section
-
-        // Events Section
-
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -228,7 +224,7 @@ fun CalendarPreview() {
     }
 }
 
-val channelId = "reminder_channel"  // 統一頻道ID
+val channelId = "reminder_channel"
 
 private fun createNotificationChannel(context: Context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -238,40 +234,31 @@ private fun createNotificationChannel(context: Context) {
         val channel = NotificationChannel(channelId, name, importance).apply {
             description = descriptionText
         }
-        // Register the channel with the system
         val notificationManager: NotificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
     }
 }
+
 fun scheduleNotification(context: Context, event: Event) {
     val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val notificationId = event.id.toInt()
 
-    val notificationId = event.id.toInt()  // 使用事件的 ID 來生成唯一的通知ID
-
-    // 創建通知內容
-    val notification = NotificationCompat.Builder(context, channelId)  // 使用統一的頻道ID
+    val notification = NotificationCompat.Builder(context, channelId)
         .setContentTitle("Event Reminder")
         .setContentText("You have an upcoming event: ${event.title}")
         .setSmallIcon(R.drawable.sheep_background)
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        .setAutoCancel(true)  // 點擊通知後自動消失
+        .setAutoCancel(true)
         .build()
 
-    // 設置提醒時間
-    val timeInMillis = event.date.atTime(event.startTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     val reminderTime = event.date.atTime(event.startTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() - event.reminderTimes.first()
-
-    // 使用 AlarmManager 設置提醒
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     val intent = Intent(context, NotificationReceiver::class.java).apply {
         putExtra("notificationId", notificationId)
         putExtra("notification", notification)
     }
-
     val pendingIntent = PendingIntent.getBroadcast(context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-
-    // 設置精確的提醒時間
     alarmManager.setExact(AlarmManager.RTC_WAKEUP, reminderTime, pendingIntent)
 }
 
@@ -279,13 +266,7 @@ class NotificationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val notificationId = intent.getIntExtra("notificationId", -1)
         val notification = intent.getParcelableExtra<Notification>("notification")
-        Log.d("NotificationReceiver", "Notification received: $notification")
-
-
-        // 發送通知
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(notificationId, notification)
-
     }
 }
-

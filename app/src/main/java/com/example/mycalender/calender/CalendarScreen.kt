@@ -3,36 +3,37 @@
 package com.example.mycalender.calender
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.example.mycalender.data.Event
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.Locale
-import com.example.mycalender.calender.EventDetailDialog
+import androidx.compose.foundation.shape.CircleShape
+
 
 @Composable
-fun CalenderScreen(viewModel: CalendarViewModel,onEditEvent: (Event) -> Unit) {
+fun CalendarScreen(viewModel: CalendarViewModel, onEditEvent: (Event) -> Unit) {
     val currentMonth = YearMonth.now()
     val startMonth = currentMonth.minusMonths(12)
     val endMonth = currentMonth.plusMonths(12)
 
     val selectedDate by viewModel.selectedDate.collectAsState()
     val eventsForSelectedDate by viewModel.eventsForSelectedDate.collectAsState()
+    val allEvents by viewModel.allEvents.collectAsState()
 
     val state = rememberCalendarState(
         startMonth = startMonth,
@@ -40,17 +41,19 @@ fun CalenderScreen(viewModel: CalendarViewModel,onEditEvent: (Event) -> Unit) {
         firstVisibleMonth = currentMonth
     )
 
-    // Dialog 和事件狀態管理
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEventDetailDialog by remember { mutableStateOf(false) }
     var eventSelected by remember { mutableStateOf<Event?>(null) }
-    //var navigateToEditScreen by remember { mutableStateOf(false) }
 
     Column {
         HorizontalCalendar(
             state = state,
             dayContent = { day ->
-                DayCell(day.date) {
+                val hasEvents = allEvents.any { it.date == day.date }
+                DayCell(
+                    date = day.date,
+                    hasEvents = hasEvents
+                ) {
                     viewModel.onDateSelected(day.date)
                 }
             },
@@ -89,18 +92,11 @@ fun CalenderScreen(viewModel: CalendarViewModel,onEditEvent: (Event) -> Unit) {
                         color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier
                             .padding(bottom = 4.dp)
-                            .combinedClickable(
-                                onClick = {
-                                    showEventDetailDialog = true
-                                    eventSelected = event
-                                },
-                                onLongClick = {
-                                    showDeleteDialog = true
-                                    eventSelected = event
-                                }
-                            )
+                            .clickable {
+                                showEventDetailDialog = true
+                                eventSelected = event
+                            }
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
         }
@@ -124,38 +120,35 @@ fun CalenderScreen(viewModel: CalendarViewModel,onEditEvent: (Event) -> Unit) {
                 onClose = { showEventDetailDialog = false },
                 onEdit = {
                     showEventDetailDialog = false
-                    onEditEvent(eventSelected!!) // 開啟編輯模式
+                    onEditEvent(eventSelected!!)
                 }
             )
         }
-        /*
-        if (navigateToEditScreen && eventSelected != null) {
-            AddEventScreen(
-                onEventSaved = { navigateToEditScreen = false },
-                onCancel = { navigateToEditScreen = false },
-                saveEventToDatabase = { updatedEvent -> viewModel.updateEvent(updatedEvent) },
-                existingEvent = eventSelected!!// 傳遞現有事件數據
-            )
-        }*/
     }
 }
 
 @Composable
-fun DayCell(date: LocalDate, onClick: () -> Unit) {
-    Text(
-        text = date.dayOfMonth.toString(),
+fun DayCell(date: LocalDate, hasEvents: Boolean, onClick: () -> Unit) {
+    Column(
         modifier = Modifier
             .padding(8.dp)
-            .clickable(onClick = onClick)
-    )
+            .clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = date.dayOfMonth.toString(),
+            style = MaterialTheme.typography.bodyLarge.copy(
+                color = if (hasEvents) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+            )
+        )
+        if (hasEvents) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error)
+            )
+        }
+    }
 }
-/*
-@Composable
-fun NavigateToAddEventScreen(event: Event, onSave: (Event) -> Unit) {
-    AddEventScreen(
-        onEventSaved = { },
-        onCancel = { /* 如果有需要，可以處理取消操作 */ },
-        saveEventToDatabase = { updatedEvent -> onSave(updatedEvent) },
-        existingEvent = event // 傳遞現有事件數據
-    )
-}*/

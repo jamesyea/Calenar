@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 
+
 class CalendarViewModel(private val repository: EventRepository) : ViewModel() {
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())
@@ -28,8 +29,12 @@ class CalendarViewModel(private val repository: EventRepository) : ViewModel() {
     private val _currentMonthYear = MutableStateFlow(YearMonth.now())
     val currentMonthYear: StateFlow<YearMonth> = _currentMonthYear
 
+    private val _allEvents = MutableStateFlow<List<Event>>(emptyList())
+    val allEvents: StateFlow<List<Event>> = _allEvents
+
     init {
         loadEventsForDate(LocalDate.now())
+        loadAllEvents()
     }
 
     fun onDateSelected(date: LocalDate) {
@@ -49,10 +54,19 @@ class CalendarViewModel(private val repository: EventRepository) : ViewModel() {
         }
     }
 
+    private fun loadAllEvents() {
+        viewModelScope.launch {
+            repository.getAllEvents().collect { events ->
+                _allEvents.value = events
+            }
+        }
+    }
+
     fun addEvent(event: Event) {
         viewModelScope.launch {
             repository.insertEvent(event)
             loadEventsForDate(_selectedDate.value)
+            loadAllEvents()
         }
     }
 
@@ -60,6 +74,7 @@ class CalendarViewModel(private val repository: EventRepository) : ViewModel() {
         viewModelScope.launch {
             repository.deleteEvent(event)
             loadEventsForDate(_selectedDate.value)
+            loadAllEvents()
         }
     }
 
@@ -67,22 +82,21 @@ class CalendarViewModel(private val repository: EventRepository) : ViewModel() {
         viewModelScope.launch {
             repository.updateEvent(event)
             loadEventsForDate(_selectedDate.value)
+            loadAllEvents()
         }
     }
+
     fun setEventReminder(context: Context, eventTimeInMillis: Long, eventTitle: String, eventDescription: String) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        // 創建通知的 Intent
-        val intent = Intent(context, NotificationReceiver::class.java)
-        intent.putExtra("eventTitle", eventTitle)
-        intent.putExtra("eventDescription", eventDescription)
+        val intent = Intent(context, NotificationReceiver::class.java).apply {
+            putExtra("eventTitle", eventTitle)
+            putExtra("eventDescription", eventDescription)
+        }
 
-        // 使用 PendingIntent 包裝通知 Intent
         val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
-        // 設置提醒時間，提前五分鐘提醒
-        val triggerAtMillis = eventTimeInMillis - 300000  // 5分鐘前
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)  // 使用 setExactAndAllowWhileIdle
+        val triggerAtMillis = eventTimeInMillis - 300000 // 提前5分鐘
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
     }
 }
-
