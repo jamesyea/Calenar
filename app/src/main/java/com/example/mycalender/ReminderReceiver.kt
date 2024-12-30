@@ -43,7 +43,7 @@ class ReminderReceiver : BroadcastReceiver() {
         if (tts == null) {
             tts = TextToSpeech(context) { status ->
                 if (status == TextToSpeech.SUCCESS) {
-                    val result = tts?.setLanguage(Locale.CHINA)
+                    val result = tts?.setLanguage(Locale.TAIWAN)
                     if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                         Log.e("ReminderReceiver", "TTS 語言不支持或缺少數據")
                     } else {
